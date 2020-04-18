@@ -13,34 +13,48 @@ import random
 def proof_of_work(last_proof):
     """
     Multi-Ouroboros of Work Algorithm
-    - Find a number p' such that the last five digits of hash(p) are equal
-    to the first five digits of hash(p')
-    - IE:  last_hash: ...AE912345, new hash 12345888...
+    - Find a number p' such that the last six digits of hash(p) are equal
+    to the first six digits of hash(p')
+    - IE:  last_hash: ...AE9123456, new hash 123456888...
     - p is the previous proof, and p' is the new proof
     - Use the same method to generate SHA-256 hashes as the examples in class
     """
 
     start = timer()
+    last_refresh = int(timer())
 
     print("Searching for next proof")
-    proof = 0
-    #  TODO: Your code here
+    proof = 78828687
+    while valid_proof(last_proof, proof) is False:
+        proof = random.randint(0, 99999999)
+        condition_1 = ((int(timer()) - last_refresh) != 0)
+        condition_2 = ((int(timer()) - last_refresh) % 3 == 0)
+        if (condition_1 and condition_2):
+            r = requests.get(url=node + "/last_proof")
+            data = r.json()
+            last_proof = data.get('proof')
+            last_refresh = int(timer())
 
     print("Proof found: " + str(proof) + " in " + str(timer() - start))
     return proof
 
 
-def valid_proof(last_hash, proof):
+def valid_proof(last_proof, proof):
     """
-    Validates the Proof:  Multi-ouroborus:  Do the last five characters of
-    the hash of the last proof match the first five characters of the hash
+    Validates the Proof:  Multi-ouroborus:  Do the last six characters of
+    the hash of the last proof match the first six characters of the hash
     of the new proof?
 
-    IE:  last_hash: ...AE912345, new hash 12345E88...
+    IE:  last_hash: ...AE9123456, new hash 123456E88...
     """
 
-    # TODO: Your code here!
-    pass
+    last_proof = f"{last_proof}".encode()
+    last_proof_hash = hashlib.sha256(last_proof).hexdigest()
+
+    proof = f"{proof}".encode()
+    proof_hash = hashlib.sha256(proof).hexdigest()
+
+    return proof_hash[:6] == last_proof_hash[-6:]
 
 
 if __name__ == '__main__':
